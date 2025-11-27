@@ -1,0 +1,12 @@
+---
+router_id: 10.255.0.2
+local_as: 65503
+bgp_neighbors:
+  - neighbor_ip: 10.255.0.49
+    remote_as: 65501
+ospf_interfaces:
+  - interface_name: GigabitEthernet0/0/0.455
+interfaces:
+  - interface_name: GigabitEthernet0/0/0.455
+    ip_address: 10.255.0.50
+    subnet_mask: 255.255.255.252
