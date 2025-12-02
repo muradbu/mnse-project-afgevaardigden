@@ -1,27 +1,31 @@
 ---
 ansible_host: 10.4.0.5
+
 bgp_config:
-  as_number: "65502"
+  as_number: 65502
   bgp:
-    router_id:
-      address: "10.0.0.3"
-  neighbors:
-    - neighbor_address: "10.255.0.45"
-      remote_as: "65501"
+    router_id: "10.0.0.3"
+    neighbors:
+      - neighbor_address: "10.255.0.45"
+        remote_as: 65501
+
+dc_ip: 10.255.0.45
+
+networks:
+  - { prefix: "10.255.0.44", mask: "255.255.255.252" }
 
 interfaces:
   - name: Tunnel1
     description: "p2p to aggregate-dc"
     ip: 10.255.0.46
     mask: 255.255.255.252
-    encapsulation: 355
 
 ospf_process_id: 1
 
 client_routers:
-  - { name: "Limburg", vlan: 101, p2p_subnet: "172.24.255.0" }
-  - { name: "N Brabant", vlan: 102, p2p_subnet: "172.25.255.0" }
-  - { name: "Gelderland", vlan: 103, p2p_subnet: "172.26.255.0" }
-  - { name: "Zeeland", vlan: 104, p2p_subnet: "172.27.255.0" }
-  - { name: "Z Holland", vlan: 105, p2p_subnet: "172.28.255.0" }
-  - { name: "ABC", vlan: 106, p2p_subnet: "172.29.255.0" }
+  - { name: "Limburg", vlan: 101, p2p_ip: "172.24.255.1" }
+  - { name: "N Brabant", vlan: 102, p2p_ip: "172.25.255.1" }
+  - { name: "Gelderland", vlan: 103, p2p_ip: "172.26.255.1" }
+  - { name: "Zeeland", vlan: 104, p2p_ip: "172.27.255.1" }
+  - { name: "Z Holland", vlan: 105, p2p_ip: "172.28.255.1" }
+  - { name: "ABC", vlan: 106, p2p_ip: "172.29.255.1" }

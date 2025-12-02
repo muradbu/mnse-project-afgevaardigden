@@ -1,5 +1,5 @@
 ---
-- name: Configure Aggregate Routers
+- name: Configure BGP-connected Routers
   hosts: aggregate_routers
   gather_facts: no
   tasks:
@@ -25,10 +25,24 @@
         - interfaces is defined
         - "'Tunnel' in item.name"
 
-    - name: "Configure BGP"
-      cisco.ios.ios_bgp_global:
-        config: "{{ bgp_config }}"
-        state: merged
+    - name: "Configure BGP - Neighbors"
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_config.as_number }}"
+        lines:
+          - "neighbor {{ item.neighbor_address }} remote-as {{ item.remote_as }}"
+      loop: "{{ bgp_config.bgp.neighbors }}"
+
+    - name: "Configure BGP - Networks"
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_config.as_number }}"
+        lines:
+          - "network {{ item.prefix }} mask {{ item.mask }}"
+      loop: "{{ networks }}"
+      when: networks is defined
+
+
 
 - name: Configure Aggregate Noord/Zuid
   hosts: aggregate_noord, aggregate_zuid
@@ -39,13 +53,14 @@
         config:
           processes:
             - process_id: "{{ ospf_process_id }}"
-              router_id: "{{ bgp_config.bgp.router_id.address }}"
+              router_id: "{{ bgp_config.bgp.router_id }}"
         state: merged
 
-    - name: "Configure OSPF Redistribution"
+    - name: "Configure OSPF Redistribution and default routing spreading"
       cisco.ios.ios_config:
         lines:
           - "redistribute bgp {{ bgp_config.as_number }} subnets"
+          - "default-information originate"
         parents:
           - "router ospf {{ ospf_process_id }}"
 
@@ -53,7 +68,7 @@
       cisco.ios.ios_config:
         lines:
           - "encapsulation dot1Q {{ item.vlan }}"
-          - "ip address {{ item.p2p_subnet | ansible.utils.ipmath(1) }} 255.255.255.252"
+          - "ip address {{ item.p2p_ip }} 255.255.255.252"
           - "ip ospf {{ ospf_process_id }} area 0"
         parents: "interface GigabitEthernet0/0/0.{{ item.vlan }}"
       loop: "{{ client_routers }}"
@@ -66,14 +81,79 @@
           - "router bgp {{ bgp_config.as_number }}"
       when: bgp_config is defined
 
+    - name: "Send default ip to dc"
+      cisco.ios.ios_config:
+        lines:
+          - "ip route 0.0.0.0 0.0.0.0 {{ dc_ip }}"
+
+
 - name: Configure Aggregate DC
   hosts: aggregate_dc
   gather_facts: no
   tasks:
-    - name: "Configure Server Router Sub-interfaces"
+    - name: "Configure OSPF Process"
+      cisco.ios.ios_ospfv2:
+        config:
+          processes:
+            - process_id: "{{ ospf_process_id }}"
+              router_id: "{{ bgp_config.bgp.router_id }}"
+        state: merged
+
+    - name: "Configure OSPF Redistribution and default routing spreading"
+      cisco.ios.ios_config:
+        lines:
+          - "redistribute bgp {{ bgp_config.as_number }} subnets"
+          - "default-information originate"
+        parents:
+          - "router ospf {{ ospf_process_id }}"
+
+    - name: "Configure Client Router Sub-interfaces"
       cisco.ios.ios_config:
         lines:
           - "encapsulation dot1Q {{ item.vlan }}"
-          - "ip address {{ item.p2p_subnet }} 255.255.255.252"
+          - "ip address {{ item.p2p_ip }} 255.255.255.252"
+          - "ip ospf {{ ospf_process_id }} area 0"
         parents: "interface GigabitEthernet0/0/0.{{ item.vlan }}"
       loop: "{{ server_routers }}"
+
+    - name: "Configure BGP to redistribute OSPF"
+      cisco.ios.ios_config:
+        lines:
+          - "redistribute ospf {{ ospf_process_id }}"
+        parents:
+          - "router bgp {{ bgp_config.as_number }}"
+      when: bgp_config is defined
+
+    - name: "Mark inside interfaces NAT"
+      ios_config:
+        parents: "interface {{ item.name }}"
+        lines:
+          - ip nat inside
+      loop: "{{ interfaces }}"
+
+    - name: "Mark outside interface NAT"
+      ios_config:
+        parents: "interface GigabitEthernet0/0/0.200"
+        lines:
+          - ip nat outside
+
+    - name: "Configure ACL for inside networks"
+      ios_config:
+        parents: "ip access-list standard NAT_INSIDE"
+        lines:
+          - permit 172.24.0.0 0.7.255.255
+          - permit 172.16.0.0 0.7.255.255
+
+    - name: "Configure NAT overload"
+      ios_config:
+        lines:
+          - ip nat inside source list NAT_INSIDE interface GigabitEthernet0/0/0.200 overload
+
+    - name: "Send default ip to internet interface"
+      cisco.ios.ios_config:
+        lines:
+          - "ip route 0.0.0.0 0.0.0.0 {{ internet_interface }}"
+
+
+
+ 

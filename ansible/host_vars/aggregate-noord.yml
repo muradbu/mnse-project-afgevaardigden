@@ -1,13 +1,18 @@
 ---
 ansible_host: 10.99.2.50
+
 bgp_config:
-  as_number: "65503"
+  as_number: 65503
   bgp:
-    router_id:
-      address: "10.0.0.2"
-  neighbors:
-    - neighbor_address: "10.255.0.49"
-      remote_as: "65501"
+    router_id: "10.0.0.2"
+    neighbors:
+      - neighbor_address: "10.255.0.49"
+        remote_as: 65501
+
+dc_ip: 10.255.0.49
+
+networks:
+  - { prefix: "10.255.0.48", mask: "255.255.255.252" }
 
 interfaces:
   - name: GigabitEthernet0/0/0.455
@@ -19,7 +24,7 @@ interfaces:
 ospf_process_id: 1
 
 client_routers:
-  - { name: "Groningen", vlan: 111, p2p_subnet: "172.19.255.0" }
-  - { name: "Friesland", vlan: 112, p2p_subnet: "172.23.255.0" }
-  - { name: "Drenthe", vlan: 113, p2p_subnet: "172.17.255.0" }
-  - { name: "Overijssel", vlan: 114, p2p_subnet: "172.21.255.0" }
+  - { name: "Groningen", vlan: 111, p2p_ip: "172.19.255.1" }
+  - { name: "Friesland", vlan: 112, p2p_ip: "172.23.255.1" }
+  - { name: "Drenthe", vlan: 113, p2p_ip: "172.17.255.1" }
+  - { name: "Overijssel", vlan: 114, p2p_ip: "172.21.255.1" }

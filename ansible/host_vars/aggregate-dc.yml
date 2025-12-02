@@ -1,15 +1,23 @@
 ---
 ansible_host: 10.99.2.51
+
 bgp_config:
-  as_number: "65501"
+  as_number: 65501
   bgp:
-    router_id:
-      address: "10.0.0.1"
-  neighbors:
-    - neighbor_address: "10.255.0.50"
-      remote_as: "65503"
-    - neighbor_address: "10.255.0.46"
-      remote_as: "65502"
+    router_id: "10.0.0.1"
+    neighbors:
+      - neighbor_address: "10.255.0.50"
+        remote_as: 65503
+      - neighbor_address: "10.255.0.46"
+        remote_as: 65502
+
+internet_interface: GigabitEthernet0/0/0.200
+
+networks:
+  - { prefix: "10.255.0.48", mask: "255.255.255.252" }
+  - { prefix: "10.255.0.44", mask: "255.255.255.252" } 
+  - { prefix: "10.1.0.0", mask: "255.255.128.0" }
+
 
 interfaces:
   - name: GigabitEthernet0/0/0.455
@@ -23,14 +31,18 @@ interfaces:
     mask: 255.255.255.252
     encapsulation: 355
 
+ospf_process_id: 1
+
 server_routers:
-  - { name: "Limburg", vlan: 400, p2p_subnet: "172.24.255.252" }
-  - { name: "N Brabant", vlan: 405, p2p_subnet: "172.25.255.252" }
-  - { name: "Gelderland", vlan: 410, p2p_subnet: "172.26.255.252" }
-  - { name: "Zeeland", vlan: 415, p2p_subnet: "172.27.255.252" }
-  - { name: "Z Holland", vlan: 460, p2p_subnet: "172.28.255.252" }
-  - { name: "ABC", vlan: 465, p2p_subnet: "172.29.255.252" }
-  - { name: "Groningen", vlan: 430, p2p_subnet: "172.19.255.252" }
-  - { name: "Friesland", vlan: 435, p2p_subnet: "172.23.255.252" }
-  - { name: "Drenthe", vlan: 440, p2p_subnet: "172.17.255.252" }
-  - { name: "Overijssel", vlan: 445, p2p_subnet: "172.21.255.252" }
+  - { name: "Limburg", vlan: 400, p2p_ip: "172.24.255.253" }
+  - { name: "N Brabant", vlan: 405, p2p_ip: "172.25.255.253" }
+  - { name: "Gelderland", vlan: 410, p2p_ip: "172.26.255.253" }
+  - { name: "Zeeland", vlan: 415, p2p_ip: "172.27.255.253" }
+  - { name: "Z Holland", vlan: 460, p2p_ip: "172.28.255.253" }
+  - { name: "ABC", vlan: 465, p2p_ip: "172.29.255.253" }
+  - { name: "Groningen", vlan: 430, p2p_ip: "172.19.255.253" }
+  - { name: "Friesland", vlan: 435, p2p_ip: "172.23.255.253" }
+  - { name: "Drenthe", vlan: 440, p2p_ip: "172.17.255.253" }
+  - { name: "Overijssel", vlan: 445, p2p_ip: "172.21.255.253" }
+
+
